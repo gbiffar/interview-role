@@ -1,0 +1,89 @@
+[global_tags]
+  site = "{{ site_name }}"
+  node_roll = "{{ node_role }}"
+
+[agent]
+  interval = "1m"
+  round_interval = true
+
+  metric_batch_size = 1000
+
+  metric_buffer_limit = 100000
+
+  collection_jitter = "0s"
+
+  flush_interval = "10s"
+  flush_jitter = "0s"
+
+  precision = "ms"
+
+  debug = false
+  quiet = false
+  logfile = ""
+
+  hostname = ""
+  omit_hostname = false
+
+[[outputs.influxdb]]
+  urls = ["http://{{ local_ip }}:8086"]
+  insecure_skip_verify = true
+  database = "{{ db }}"
+  retention_policy = ""
+  write_consistency = "any"
+  timeout = "5s"
+   username = "{{ username }}"
+   password = "{{ password }}"
+
+{% if remote_ip != None %}
+[[outputs.influxdb]]
+  urls = ["http://{{ remote_ip }}:8086"]
+  insecure_skip_verify = true
+  database = "{{ remote_db }}"
+  retention_policy = ""
+  write_consistency = "any"
+  timeout = "5s"
+   username = "{{ remote_username }}"
+   password = "{{ remote_password }}"
+{% endif %}
+
+[[inputs.cpu]]
+  percpu = false
+  totalcpu = true
+  collect_cpu_time = false
+  report_active = false
+
+#[[inputs.ceph]]
+#  interval = "1m"
+#  ceph_binary = "/bin/ceph"
+#  socket_dir = "/var/run/ceph"
+#  mon_prefix = "ceph-mon"
+#  osd_prefix = "ceph-osd"
+#  socket_suffix = "asok"
+#  ceph_user = "client.admin"
+#  ceph_config = "/etc/ceph/ceph.conf"
+#  gather_admin_socket_stats = true
+#  gather_cluster_stats = false
+
+{% if ansible_hostname == listener_hostname %}
+[[inputs.socket_listener]]
+  service_address = "udp://:8094"
+{% endif %}
+
+[[inputs.disk]]
+
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs"]
+
+[[inputs.diskio]]
+
+[[inputs.ipmi_sensor]]
+  path = "/usr/bin/ipmitool"
+  interval = "60s"
+  timeout = "10s"
+
+[[inputs.mem]]
+
+[[inputs.net]]
+
+[[inputs.processes]]
+
+[[inputs.system]]

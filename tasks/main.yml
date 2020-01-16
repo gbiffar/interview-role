@@ -1,0 +1,55 @@
+---
+- name: task1
+  yum_repository:
+    name: influxdb
+    description: InfluxDB Repository - RHEL \$releasever
+    file: influxdb
+    baseurl: https://repos.influxdata.com/centos/\$releasever/\$basearch/stable
+    gpgkey: https://repos.influxdata.com/influxdb.key
+    gpgcheck: yes
+    enabled: yes
+    state: present
+
+- name: task2
+  yum:
+    name: telegraf
+    state: present
+
+- name: task3
+  yum:
+    name: ipmitool
+    state: present
+
+- name: task4
+  copy:
+    src: 52-telegraf-ipmi.rules
+    dest: /etc/udev/rules.d/52-telegraf-ipmi.rules
+    owner: root
+    group: root
+    mode: 0664
+  notify: 
+    - handler 2
+    - handler 3
+
+- name: task5
+  stat: 
+    path: /dev/ipmi0
+  register: ipmi0
+  changed_when: ipmi0.stat.gr_name != "telegraf" or ipmi0.stat.mode != "0660"
+  notify:
+    - udev reload
+    - udev trigger
+
+- name: task6
+  template:
+    src: telegraf.conf.j2
+    dest: /etc/telegraf/telegraf.conf
+    mode: 0755
+    backup: yes
+  notify: handler 1
+
+- name: task7
+  service:
+    name: telegraf
+    state: started
+    enabled: yes
